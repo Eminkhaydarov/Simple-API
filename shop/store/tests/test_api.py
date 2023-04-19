@@ -3,6 +3,7 @@ import json
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.test import APITestCase
 
 from store.models import Product
@@ -12,7 +13,7 @@ from store.serializers import ProductSerializer
 class ProductApiTestCase(APITestCase):
     def setUp(self) -> None:
         self.user = User.objects.create(username='test_user')
-        self.product_1 = Product.objects.create(name='book_1', price=26)
+        self.product_1 = Product.objects.create(name='book_1', price=26, owner=self.user)
         self.product_2 = Product.objects.create(name='book_2', price=27)
         self.product_3 = Product.objects.create(name='book 27.00', price=26)
 
@@ -60,6 +61,7 @@ class ProductApiTestCase(APITestCase):
                                     content_type='application/json')
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
         self.assertEqual(4, Product.objects.all().count())
+        self.assertEqual(self.user, Product.objects.last().owner)
 
     def test_update(self):
         url = reverse('product-detail', args=(self.product_1.id,))
@@ -68,16 +70,67 @@ class ProductApiTestCase(APITestCase):
         json_data = json.dumps(data)
         self.client.force_login(self.user)
         response = self.client.put(url,
-                                    data=json_data,
-                                    content_type='application/json')
+                                   data=json_data,
+                                   content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.product_1.refresh_from_db()
         self.assertEqual(375, self.product_1.price)
+
+    def test_update_not_owner(self):
+        self.user_2 = User.objects.create(username='test_user_2')
+        self.client.force_login(self.user_2)
+        url = reverse('product-detail', args=(self.product_1.id,))
+        data = {"name": "book_1",
+                "price": 375}
+        json_data = json.dumps(data)
+        response = self.client.put(url,
+                                   data=json_data,
+                                   content_type='application/json')
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.product_1.refresh_from_db()
+        self.assertEqual(26, self.product_1.price)
+        self.assertEqual({'detail': ErrorDetail(string='You do not have permission to perform this action.', code='permission_denied')}, response.data)
+
+    def test_update_not_owner_but_staff(self):
+        self.user_2 = User.objects.create(username='test_user_2',
+                                          is_staff=True)
+        self.client.force_login(self.user_2)
+        url = reverse('product-detail', args=(self.product_1.id,))
+        data = {"name": "book_1",
+                "price": 375}
+        json_data = json.dumps(data)
+        response = self.client.put(url,
+                                   data=json_data,
+                                   content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.product_1.refresh_from_db()
+        self.assertEqual(375, self.product_1.price)
+
 
     def test_delete(self):
         self.assertEqual(3, Product.objects.all().count())
         url = reverse('product-detail', args=(self.product_1.id,))
         self.client.force_login(self.user)
+        response = self.client.delete(url)
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+        self.assertEqual(2, Product.objects.all().count())
+
+    def test_delete_not_owner(self):
+        self.assertEqual(3, Product.objects.all().count())
+        url = reverse('product-detail', args=(self.product_1.id,))
+        self.user_2 = User.objects.create(username='test_user_2')
+        self.client.force_login(self.user_2)
+        response = self.client.delete(url)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(3, Product.objects.all().count())
+        self.assertEqual({'detail': ErrorDetail(string='You do not have permission to perform this action.',
+                                                code='permission_denied')}, response.data)
+
+    def test_delete_not_owner_but_staff(self):
+        self.assertEqual(3, Product.objects.all().count())
+        url = reverse('product-detail', args=(self.product_1.id,))
+        self.user_2 = User.objects.create(username='test_user_2', is_staff=True)
+        self.client.force_login(self.user_2)
         response = self.client.delete(url)
         self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
         self.assertEqual(2, Product.objects.all().count())
