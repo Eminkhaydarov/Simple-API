@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework.routers import SimpleRouter
 
-from store.views import ProductViewSet, auth
+from store.views import ProductViewSet, auth, UserProductRelationViewSet
 
 router = SimpleRouter()
 router.register(r'product', ProductViewSet)
+router.register(r'product_relation', UserProductRelationViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

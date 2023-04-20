@@ -143,3 +143,24 @@ class ProductApiTestCase(APITestCase):
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
         self.assertEqual(serializer_data, response.data)
+
+
+class ProductRelationApiTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.user_1 = User.objects.create(username='test_user_1')
+        self.user_2 = User.objects.create(username='test_user_2')
+        self.product_1 = Product.objects.create(name='book_1', price=26, owner=self.user)
+        self.product_2 = Product.objects.create(name='book_2', price=27)
+        self.product_3 = Product.objects.create(name='book 27.00', price=26)
+
+    def test_get(self):
+        url = reverse('userproductrelation-detail', args=(self.product_1.id,))
+        self.client.force_login(self.user_1)
+        data = {"like": True}
+        json_data = json.dumps(data)
+        response = self.client.patch(url, data=json_data, content_type='application/json')
+        self.product_1.refresh_from_db()
+
+        self.assertTrue(self.product_1.like)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+
