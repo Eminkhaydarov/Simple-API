@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.test import APITestCase
 
-from store.models import Product
+from store.models import Product, UserProductRelation
 from store.serializers import ProductSerializer
 
 
@@ -149,18 +149,42 @@ class ProductRelationApiTestCase(APITestCase):
     def setUp(self) -> None:
         self.user_1 = User.objects.create(username='test_user_1')
         self.user_2 = User.objects.create(username='test_user_2')
-        self.product_1 = Product.objects.create(name='book_1', price=26, owner=self.user)
+        self.product_1 = Product.objects.create(name='book_1', price=26, owner=self.user_1)
         self.product_2 = Product.objects.create(name='book_2', price=27)
         self.product_3 = Product.objects.create(name='book 27.00', price=26)
 
-    def test_get(self):
+    def test_like_and_in_bookmarks(self):
         url = reverse('userproductrelation-detail', args=(self.product_1.id,))
         self.client.force_login(self.user_1)
         data = {"like": True}
         json_data = json.dumps(data)
         response = self.client.patch(url, data=json_data, content_type='application/json')
-        self.product_1.refresh_from_db()
-
-        self.assertTrue(self.product_1.like)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
+        relation = UserProductRelation.objects.get(user=self.user_1, product=self.product_1)
+        self.assertTrue(relation.like)
 
+        data = {"in_bookmarks": True}
+        json_data = json.dumps(data)
+        response = self.client.patch(url, data=json_data, content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        relation = UserProductRelation.objects.get(user=self.user_1, product=self.product_1)
+        self.assertTrue(relation.in_bookmarks)
+
+    def test_rate(self):
+        url = reverse('userproductrelation-detail', args=(self.product_1.id,))
+        self.client.force_login(self.user_1)
+        data = {"rate": 3}
+        json_data = json.dumps(data)
+        response = self.client.patch(url, data=json_data, content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        relation = UserProductRelation.objects.get(user=self.user_1, product=self.product_1)
+        self.assertEqual(3, relation.rate)
+
+    def test_rate_wrong(self):
+        url = reverse('userproductrelation-detail', args=(self.product_1.id,))
+        self.client.force_login(self.user_1)
+        data = {"rate": 7}
+        json_data = json.dumps(data)
+        response = self.client.patch(url, data=json_data, content_type='application/json')
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code, response.data)
+        self.assertEqual({'rate': [ErrorDetail(string='"7" is not a valid choice.', code='invalid_choice')]}, response.data)

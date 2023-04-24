@@ -19,13 +19,15 @@ class ProductSerializerTestCase(TestCase):
                 'id': product_1.id,
                 'name': 'book_1',
                 'price': '26.00',
-                'owner': self.user.id
+                'owner': self.user.id,
+                'viewers': [],
             },
             {
                 'id': product_2.id,
                 'name': 'book_2',
                 'price': '27.00',
-                'owner': self.user.id
+                'owner': self.user.id,
+                'viewers': [],
             }
         ]
         self.assertEqual(expected_data, data)

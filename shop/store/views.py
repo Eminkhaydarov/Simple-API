@@ -34,3 +34,7 @@ class UserProductRelationViewSet(mixins.UpdateModelMixin, GenericViewSet):
     serializer_class = UserProductRelationSerializer
     lookup_field = 'product'
 
+    def get_object(self):
+        obj, _ = UserProductRelation.objects.get_or_create(user=self.request.user,
+                                                                  product_id=self.kwargs['product'])
+        return obj
