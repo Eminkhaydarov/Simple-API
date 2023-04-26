@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.models import User
+from django.db.models import Count, Case, When, Avg
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import ErrorDetail
@@ -16,36 +17,59 @@ class ProductApiTestCase(APITestCase):
         self.product_1 = Product.objects.create(name='book_1', price=26, owner=self.user)
         self.product_2 = Product.objects.create(name='book_2', price=27)
         self.product_3 = Product.objects.create(name='book 27.00', price=26)
+        UserProductRelation.objects.create(user=self.user, product=self.product_1, like=True, rate=5)
+
 
     def test_get(self):
         url = reverse('product-list')
-        serializer_data = ProductSerializer([self.product_1, self.product_2, self.product_3], many=True).data
+        products = Product.objects.all().annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('id')
+        serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
-
+        self.assertEqual(serializer_data[0]['rating'], '5.00')
+        self.assertEqual(serializer_data[0]['annoteted_likes'], 1)
     def test_get_filter(self):
         url = reverse('product-list')
-        serializer_data = ProductSerializer([self.product_1, self.product_3], many=True).data
+        products = Product.objects.filter(id__in=[self.product_1.id, self.product_3.id]).annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('id')
+        serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'price': '26.00'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_search(self):
         url = reverse('product-list')
-        serializer_data = ProductSerializer([self.product_2, self.product_3], many=True).data
+        products = Product.objects.filter(id__in=[self.product_2.id, self.product_3.id]).annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('id')
+        serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'search': '27.00'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_order(self):
         url = reverse('product-list')
-        serializer_data = ProductSerializer([self.product_1, self.product_3, self.product_2, ], many=True).data
+        products = Product.objects.all().annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('price')
+        serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'ordering': 'price'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
         response = self.client.get(url, data={'ordering': '-price'})
-        serializer_data = ProductSerializer([self.product_2, self.product_1, self.product_3, ], many=True).data
+        products = Product.objects.all().annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('-price')
+        serializer_data = ProductSerializer(products, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
@@ -136,12 +160,14 @@ class ProductApiTestCase(APITestCase):
         self.assertEqual(2, Product.objects.all().count())
 
     def test_detail_read(self):
-        serializer_data = ProductSerializer(self.product_1).data
+        products = Product.objects.filter(id__in=[self.product_1.id]).annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate'))
+        serializer_data = ProductSerializer(products[0], many=False).data
         url = reverse('product-detail', args=(self.product_1.id,))
         self.client.force_login(self.user)
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-
         self.assertEqual(serializer_data, response.data)
 
 

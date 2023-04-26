@@ -1,3 +1,4 @@
+from django.db.models import Count, Case, When, Avg
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins
@@ -11,7 +12,10 @@ from store.serializers import ProductSerializer, UserProductRelationSerializer
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().annotate(
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
+            rating=Avg('userproductrelation__rate')
+            ).order_by('id')
     serializer_class = ProductSerializer
     permission_classes = [IsOwnerOrIsStaffOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]

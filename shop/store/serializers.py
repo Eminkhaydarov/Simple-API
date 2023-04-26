@@ -1,12 +1,16 @@
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from store.models import Product, UserProductRelation
 
 
 class ProductSerializer(ModelSerializer):
+    annoteted_likes = serializers.IntegerField(read_only=True)
+    rating = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ('id', 'name', 'price', 'owner', 'annoteted_likes', 'rating')
+
 
 
 class UserProductRelationSerializer(ModelSerializer):
