@@ -30,3 +30,7 @@ urlpatterns = [
     path('auth/', auth)
 ]
 urlpatterns += router.urls
+
+urlpatterns = [
+    path('__debug__/', include('debug_toolbar.urls')),
+] + urlpatterns

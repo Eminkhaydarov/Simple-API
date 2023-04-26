@@ -36,7 +36,8 @@ class ProductSerializerTestCase(TestCase):
                 'price': '26.00',
                 'owner': self.user.id,
                 'annoteted_likes': 3,
-                'rating': '4.67'
+                'rating': '4.67',
+                'owner_name': self.user.username,
             },
             {
                 'id': product_2.id,
@@ -44,7 +45,8 @@ class ProductSerializerTestCase(TestCase):
                 'price': '27.00',
                 'owner': self.user.id,
                 'annoteted_likes': 2,
-                'rating': '3.50'
+                'rating': '3.50',
+                'owner_name': self.user.username,
             }
         ]
         self.assertEqual(expected_data, data)

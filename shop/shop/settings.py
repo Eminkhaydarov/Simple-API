@@ -35,9 +35,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "debug_toolbar",
     'store',
     'rest_framework',
     'social_django',
+
 ]
 
 MIDDLEWARE = [
@@ -48,6 +50,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'debug_toolbar_force.middleware.ForceDebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'shop.urls'
@@ -140,3 +145,9 @@ REST_FRAMEWORK = {
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_GITHUB_KEY = '18bff40a2067437942d4'
 SOCIAL_AUTH_GITHUB_SECRET = 'c7b56781db147e421b07cec0ccd4afa776a0b2f3'
+
+INTERNAL_IPS = [
+
+    "127.0.0.1",
+
+]
