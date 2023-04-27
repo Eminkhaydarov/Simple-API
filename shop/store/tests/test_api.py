@@ -19,25 +19,23 @@ class ProductApiTestCase(APITestCase):
         self.product_3 = Product.objects.create(name='book 27.00', price=26)
         UserProductRelation.objects.create(user=self.user, product=self.product_1, like=True, rate=5)
 
-
     def test_get(self):
         url = reverse('product-list')
         products = Product.objects.all().annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('id')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('id')
         serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
         self.assertEqual(serializer_data[0]['rating'], '5.00')
         self.assertEqual(serializer_data[0]['annoteted_likes'], 1)
+
     def test_get_filter(self):
         url = reverse('product-list')
         products = Product.objects.filter(id__in=[self.product_1.id, self.product_3.id]).annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('id')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('id')
         serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'price': '26.00'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -46,9 +44,8 @@ class ProductApiTestCase(APITestCase):
     def test_get_search(self):
         url = reverse('product-list')
         products = Product.objects.filter(id__in=[self.product_2.id, self.product_3.id]).annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('id')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('id')
         serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'search': '27.00'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -57,18 +54,16 @@ class ProductApiTestCase(APITestCase):
     def test_get_order(self):
         url = reverse('product-list')
         products = Product.objects.all().annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('price')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('price')
         serializer_data = ProductSerializer(products, many=True).data
         response = self.client.get(url, data={'ordering': 'price'})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
         response = self.client.get(url, data={'ordering': '-price'})
         products = Product.objects.all().annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('-price')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('-price')
         serializer_data = ProductSerializer(products, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
@@ -113,7 +108,8 @@ class ProductApiTestCase(APITestCase):
         self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
         self.product_1.refresh_from_db()
         self.assertEqual(26, self.product_1.price)
-        self.assertEqual({'detail': ErrorDetail(string='You do not have permission to perform this action.', code='permission_denied')}, response.data)
+        self.assertEqual({'detail': ErrorDetail(string='You do not have permission to perform this action.',
+                                                code='permission_denied')}, response.data)
 
     def test_update_not_owner_but_staff(self):
         self.user_2 = User.objects.create(username='test_user_2',
@@ -129,7 +125,6 @@ class ProductApiTestCase(APITestCase):
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.product_1.refresh_from_db()
         self.assertEqual(375, self.product_1.price)
-
 
     def test_delete(self):
         self.assertEqual(3, Product.objects.all().count())
@@ -161,8 +156,7 @@ class ProductApiTestCase(APITestCase):
 
     def test_detail_read(self):
         products = Product.objects.filter(id__in=[self.product_1.id]).annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate'))
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))))
         serializer_data = ProductSerializer(products[0], many=False).data
         url = reverse('product-detail', args=(self.product_1.id,))
         self.client.force_login(self.user)
@@ -213,4 +207,5 @@ class ProductRelationApiTestCase(APITestCase):
         json_data = json.dumps(data)
         response = self.client.patch(url, data=json_data, content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code, response.data)
-        self.assertEqual({'rate': [ErrorDetail(string='"7" is not a valid choice.', code='invalid_choice')]}, response.data)
+        self.assertEqual({'rate': [ErrorDetail(string='"7" is not a valid choice.', code='invalid_choice')]},
+                         response.data)

@@ -13,9 +13,8 @@ from store.serializers import ProductSerializer, UserProductRelationSerializer
 
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all().annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('id').select_related('owner')
+        annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+    ).order_by('id').select_related('owner')
     serializer_class = ProductSerializer
     permission_classes = [IsOwnerOrIsStaffOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -40,5 +39,5 @@ class UserProductRelationViewSet(mixins.UpdateModelMixin, GenericViewSet):
 
     def get_object(self):
         obj, _ = UserProductRelation.objects.get_or_create(user=self.request.user,
-                                                                  product_id=self.kwargs['product'])
+                                                           product_id=self.kwargs['product'])
         return obj

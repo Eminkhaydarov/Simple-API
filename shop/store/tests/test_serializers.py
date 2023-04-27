@@ -19,15 +19,19 @@ class ProductSerializerTestCase(TestCase):
 
         UserProductRelation.objects.create(user=self.user, product=product_1, like=True, rate=5)
         UserProductRelation.objects.create(user=self.user_2, product=product_1, like=True, rate=5)
-        UserProductRelation.objects.create(user=self.user_3, product=product_1, like=True, rate=4)
+
+        user_product_3 = UserProductRelation.objects.create(user=self.user_3, product=product_1, like=True)
+
+        user_product_3.rate = 4
+        user_product_3.save()
 
         UserProductRelation.objects.create(user=self.user, product=product_2, like=True, rate=3)
         UserProductRelation.objects.create(user=self.user_2, product=product_2, like=True, rate=4)
         UserProductRelation.objects.create(user=self.user_3, product=product_2, like=False)
+
         products = Product.objects.all().annotate(
-            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1))),
-            rating=Avg('userproductrelation__rate')
-            ).order_by('id')
+            annoteted_likes=Count(Case(When(userproductrelation__like=True, then=1)))
+        ).order_by('id')
         data = ProductSerializer(products, many=True).data
         expected_data = [
             {
@@ -49,4 +53,5 @@ class ProductSerializerTestCase(TestCase):
                 'owner_name': self.user.username,
             }
         ]
+
         self.assertEqual(expected_data, data)

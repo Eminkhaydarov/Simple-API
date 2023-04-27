@@ -8,6 +8,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=9, decimal_places=2)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='my_product')
     viewers = models.ManyToManyField(User, through='UserProductRelation', related_name='products')
+    rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, default=None)
 
     def __str__(self):
         return f'ID {self.id}: {self.name}'
@@ -30,3 +31,15 @@ class UserProductRelation(models.Model):
 
     def __str__(self):
         return f'{self.user.username}: {self.product.name}, RATE {self.rate}'
+
+    def __init__(self, *args, **kwargs):
+        super(UserProductRelation, self).__init__(*args, **kwargs)
+        self.old_rate = self.rate
+
+    def save(self, *args, **kwargs):
+        creating = not self.pk
+        super().save(*args, **kwargs)
+
+        if self.old_rate != self.rate or creating:
+            from store.logic import set_rating
+            set_rating(self.product)
