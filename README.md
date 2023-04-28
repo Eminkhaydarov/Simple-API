@@ -1,13 +1,13 @@
 # Simple-API
-* http://localhost:8080/auth - авторизация через Githaub
-* http://localhost:8080/product - получить все товары
-* http://localhost:8080/product/?price= - отфильтровать результаты по цене
-* http://localhost:8080/product/?search= - поиск
-* http://localhost:8080/product/?ordering= - сортировка по цене или имени
-* http://localhost:8080/product/{product_id} - получение изменение и удаление конкретного товара
-* http://localhost:8080/product_relation/{product_id}?rate= - изменение рейтинга товара
-* http://localhost:8080/product_relation/{product_id}?in_bookmarks={bool} - добавление в закладки
-* http://localhost:8080/product_relation/{product_id}?like={bool} - лайк товара
+* http://localhost:8000/auth - авторизация через Githaub
+* http://localhost:8000/product - получить все товары
+* http://localhost:8000/product/?price= - отфильтровать результаты по цене
+* http://localhost:8000/product/?search= - поиск
+* http://localhost:8000/product/?ordering= - сортировка по цене или имени
+* http://localhost:8000/product/{product_id} - получение изменение и удаление конкретного товара
+* http://localhost:8000/product_relation/{product_id}?rate= - изменение рейтинга товара
+* http://localhost:8000/product_relation/{product_id}?in_bookmarks={bool} - добавление в закладки
+* http://localhost:8000/product_relation/{product_id}?like={bool} - лайк товара
 
 
 # stack
