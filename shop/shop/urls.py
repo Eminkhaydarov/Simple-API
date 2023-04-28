@@ -16,8 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from rest_framework.routers import SimpleRouter
 
+from rest_framework.routers import SimpleRouter
 from store.views import ProductViewSet, auth, UserProductRelationViewSet
 
 router = SimpleRouter()
@@ -27,10 +27,9 @@ router.register(r'product_relation', UserProductRelationViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path('', include('social_django.urls', namespace='social')),
-    path('auth/', auth)
+    path('auth/', auth),
 ]
 urlpatterns += router.urls
-
 urlpatterns = [
-    path('__debug__/', include('debug_toolbar.urls')),
-] + urlpatterns
+                  path('__debug__/', include('debug_toolbar.urls')),
+              ] + urlpatterns
